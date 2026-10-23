@@ -1,0 +1,19 @@
+@use 'tokens' as tokens;
+
+@mixin tablet {
+  @media (max-width: tokens.$breakpoint-tablet) {
+    @content;
+  }
+}
+
+@mixin mobile {
+  @media (max-width: tokens.$breakpoint-mobile) {
+    @content;
+  }
+}
+
+@mixin text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

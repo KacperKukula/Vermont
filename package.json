@@ -1,0 +1,14 @@
+{
+  "name": "people-mp3",
+  "private": true,
+  "packageManager": "npm@12.1.0",
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "check": "turbo run check",
+    "test": "turbo run test",
+    "db:migrate": "npm run db:migrate -w @people/server"
+  },
+  "devDependencies": { "turbo": "^2.5.0", "typescript": "^5.9.3" }
+}

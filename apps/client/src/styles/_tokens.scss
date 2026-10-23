@@ -1,0 +1,103 @@
+// Design tokens only. This module must not emit CSS.
+
+// Surfaces and borders.
+$color-background: #11131b;
+$color-surface: #1a1d28;
+$color-input: #131620;
+$color-library: #151822;
+$color-border: #2c3040;
+$color-hover: #252a38;
+
+// Typography and interactive states.
+$color-text: #f0f1f6;
+$color-text-muted: #9298ad;
+$color-text-subtle: #60687c;
+$color-placeholder: #626a80;
+$color-accent: #45b85e;
+$color-on-accent: #172110;
+$color-ghost-text: #d5d9e5;
+
+// Notifications.
+$color-error-background: #44232b;
+$color-error-text: #ffbec6;
+$color-error-border: #70333e;
+$color-success-background: #203525;
+$color-success-text: #b9edb2;
+$color-success-border: #355b38;
+
+// Recordings and upload.
+$color-track-hover: #1e2230;
+$color-track-active: #242e26;
+$color-track-title: #e9ecf5;
+$color-track-filename: #778198;
+$color-track-date: #697186;
+$color-delete: #7c8396;
+$color-delete-hover: #ff9d9d;
+$color-badge: #2b303e;
+$color-empty-icon: #222b25;
+$color-dropzone: #141820;
+$color-dropzone-border: #414b43;
+$color-dropzone-hover: #222e24;
+$color-dropzone-text: #e0e5df;
+$color-progress-track: #323849;
+$color-privacy-text: #727b8e;
+$color-waveform-end: #75ad88;
+
+// Player.
+$color-player-background: #1a1e29f5;
+$color-player-border: #343a47;
+$color-player-art: #2f3831;
+
+// Type scale.
+$font-family-body: Inter, 'Segoe UI', sans-serif;
+$font-size-2xs: 10px;
+$font-size-xs: 11px;
+$font-size-sm: 12px;
+$font-size-label: 13px;
+$font-size-md: 14px;
+$font-size-base: 15px;
+$font-size-lg: 18px;
+$font-size-xl: 22px;
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 750;
+$line-height-body: 1.7;
+
+// Shared spacing scale; component-specific dimensions stay with components.
+$space-1: 4px;
+$space-2: 8px;
+$space-3: 12px;
+$space-4: 16px;
+$space-5: 20px;
+$space-6: 24px;
+$space-7: 28px;
+$space-8: 32px;
+$space-9: 36px;
+$space-10: 40px;
+$space-12: 48px;
+
+$radius-xs: 5px;
+$radius-sm: 9px;
+$radius-md: 12px;
+$radius-lg: 14px;
+$radius-xl: 18px;
+$radius-pill: 999px;
+
+// Layout and responsive thresholds.
+$container-width: 1440px;
+$container-content-width: 1320px;
+$container-gutter: 60px;
+$container-gutter-tablet: 30px;
+$container-gutter-mobile: 20px;
+$breakpoint-tablet: 1050px;
+$breakpoint-mobile: 760px;
+$z-index-player: 10;
+
+// Motion and effects.
+$transition-fast: 150ms;
+$transition-progress: 100ms;
+$opacity-disabled: 0.5;
+$shadow-card: 0 22px 80px #0002;
+$shadow-player: 0 -10px 40px #0002;
+$shadow-playing: 0 0 20px #b7f11715;

@@ -1,0 +1,29 @@
+@use '../tokens' as tokens;
+
+input,
+textarea {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid tokens.$color-border;
+  border-radius: tokens.$radius-sm;
+  background: tokens.$color-input;
+  color: tokens.$color-text;
+
+  &::placeholder {
+    color: tokens.$color-placeholder;
+  }
+}
+
+label {
+  display: block;
+  margin: 20px 0 9px;
+  font-size: tokens.$font-size-label;
+  font-weight: tokens.$font-weight-semibold;
+
+  span {
+    float: right;
+    color: tokens.$color-text-muted;
+    font-size: tokens.$font-size-xs;
+    font-weight: tokens.$font-weight-normal;
+  }
+}

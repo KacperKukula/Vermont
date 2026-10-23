@@ -1,0 +1,89 @@
+@use '../tokens' as tokens;
+@use '../mixins' as mixins;
+
+// Shared page containers; component internals belong in components/.
+.welcome {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 90px;
+  align-items: center;
+  min-height: calc(100vh - 180px);
+  padding: 88px 20px 70px;
+
+  @include mixins.tablet {
+    gap: 35px;
+    padding-inline: 0;
+  }
+
+  @include mixins.mobile {
+    grid-template-columns: 1fr;
+    gap: 35px;
+    min-height: auto;
+    padding: tokens.$space-10 0;
+  }
+}
+
+.dashboard {
+  padding: 48px 0 145px;
+
+  @include mixins.mobile {
+    padding-top: 30px;
+    padding-bottom: 200px;
+  }
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 310px;
+  gap: tokens.$space-7;
+  align-items: start;
+
+  @include mixins.tablet {
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: tokens.$space-5;
+  }
+
+  @include mixins.mobile {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sidebar {
+  @include mixins.mobile {
+    grid-row: 1;
+  }
+}
+
+.integrations-content {
+  max-width: 560px;
+}
+
+.page-content {
+  padding: 80px 0 170px;
+  text-align: center;
+}
+
+.page-heading {
+  margin-bottom: tokens.$space-9;
+
+  h1 {
+    margin-bottom: 10px;
+    font-size: 43px;
+    letter-spacing: -1.5px;
+  }
+
+  p {
+    margin: 0;
+    font-size: tokens.$font-size-md;
+  }
+
+  @include mixins.mobile {
+    h1 {
+      font-size: 34px;
+    }
+
+    p {
+      font-size: tokens.$font-size-sm;
+    }
+  }
+}

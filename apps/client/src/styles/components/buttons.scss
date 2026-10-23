@@ -1,0 +1,55 @@
+@use 'sass:color';
+@use '../tokens' as tokens;
+
+.button {
+  display: inline-block;
+  padding: 13px 19px;
+  border: 1px solid transparent;
+  border-radius: tokens.$radius-sm;
+  font-weight: 650;
+  text-align: center;
+  text-decoration: none;
+  transition:
+    background tokens.$transition-fast,
+    transform tokens.$transition-fast;
+
+  &:not(:disabled):active {
+    transform: translateY(1px);
+  }
+
+  &.primary {
+    background: tokens.$color-accent;
+    color: tokens.$color-on-accent;
+
+    &:hover:not(:disabled) {
+      background: color.adjust(tokens.$color-accent, $lightness: 6%);
+    }
+  }
+
+  &.ghost {
+    border-color: tokens.$color-border;
+    background: transparent;
+    color: tokens.$color-ghost-text;
+
+    &:hover:not(:disabled) {
+      background: tokens.$color-hover;
+    }
+  }
+
+  &.small {
+    padding: 9px 13px;
+    font-size: tokens.$font-size-sm;
+  }
+
+  &.full {
+    width: 100%;
+  }
+}
+
+.text-button {
+  padding: 15px 0 0;
+  border: 0;
+  background: transparent;
+  color: tokens.$color-text-muted;
+  font-size: tokens.$font-size-xs;
+}
