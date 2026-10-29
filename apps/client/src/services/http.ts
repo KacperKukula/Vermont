@@ -1,30 +1,65 @@
+import axios, { type AxiosRequestConfig } from 'axios';
+
 // Shared HTTP transport; feature-specific endpoints live in *.service.ts.
+const http = axios.create({
+  baseURL: '/api',
+  withCredentials: true,
+  headers: { 'Content-Type': 'application/json' },
+});
+
 export class ApiError extends Error {
-  constructor(message: string, readonly status: number) { super(message); }
+  constructor(message: string, readonly status: number) {
+    super(message);
+  }
 }
 
-export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(`/api${path}`, {
-    ...options,
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...options.headers },
-  });
-  const body = await response.json().catch(() => null);
-  if (!response.ok) throw new ApiError(typeof body?.message === 'string' ? body.message : 'Nie udało się wykonać operacji', response.status);
-  return body as T;
+export async function api<T>(path: string, options: AxiosRequestConfig = {}): Promise<T> {
+  try {
+    const response = await http.request<T>({ ...options, url: path });
+    return response.data === '' ? null as T : response.data;
+  } catch (cause) {
+    if (axios.isAxiosError<{ message?: unknown }>(cause) && cause.response) {
+      const message = cause.response.data?.message;
+      throw new ApiError(
+        typeof message === 'string' ? message : 'The operation could not be completed.',
+        cause.response.status,
+      );
+    }
+    throw cause;
+  }
 }
 
-export function uploadFile(url: string, file: File, progress: (value: number) => void): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open('PUT', url);
-    xhr.setRequestHeader('Content-Type', 'audio/mpeg');
-    xhr.setRequestHeader('If-None-Match', '*');
-    xhr.timeout = 15 * 60 * 1000;
-    xhr.upload.onprogress = (event) => { if (event.lengthComputable) progress(Math.round(event.loaded / event.total * 100)); };
-    xhr.onload = () => xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error('Upload do R2 nie powiódł się. Sprawdź konfigurację CORS i spróbuj ponownie.'));
-    xhr.onerror = () => reject(new Error('Brak połączenia z R2. Sprawdź sieć i konfigurację CORS.'));
-    xhr.ontimeout = () => reject(new Error('Przekroczono czas przesyłania pliku.'));
-    xhr.send(file);
-  });
+export function get<T>(path: string, options: Omit<AxiosRequestConfig, 'method' | 'data'> = {}): Promise<T> {
+  return api<T>(path, { ...options, method: 'GET' });
+}
+
+export function post<T>(
+  path: string,
+  data?: unknown,
+  options: Omit<AxiosRequestConfig, 'method' | 'data'> = {},
+): Promise<T> {
+  return api<T>(path, { ...options, method: 'POST', data });
+}
+
+export async function uploadFile(url: string, file: File, progress: (value: number) => void): Promise<void> {
+  try {
+    // Signed storage uploads do not use the API base URL or session cookies.
+    await axios.put(url, file, {
+      withCredentials: false,
+      headers: { 'Content-Type': 'audio/mpeg', 'If-None-Match': '*' },
+      timeout: 15 * 60 * 1000,
+      onUploadProgress: ({ loaded, total }) => {
+        if (total) progress(Math.round(loaded / total * 100));
+      },
+    });
+  } catch (cause) {
+    if (!axios.isAxiosError(cause)) throw cause;
+    if (cause.code === 'ECONNABORTED' || cause.code === 'ETIMEDOUT') {
+      throw new Error('The file upload timed out.');
+    }
+    if (!cause.response) {
+      throw new Error('Could not connect to R2. Check your network and CORS configuration.');
+    }
+    throw new Error('The R2 upload failed. Check the CORS configuration and try again.');
+  }
 }

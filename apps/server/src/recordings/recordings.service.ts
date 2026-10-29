@@ -1,28 +1,20 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import type { Recording, UploadInput } from '@people/contracts';
+import type { Recording, UploadInput } from '@vermont/contracts';
+import type { Asset as AssetModel } from '../generated/prisma/client.js';
 import { DatabaseService } from '../database/database.service.js';
 import { StorageService } from '../storage/storage.service.js';
 import { config } from '../config.js';
 import { parse } from '../validation.js';
 import { looksLikeMp3 } from '../mp3.js';
 
-interface Row {
-  id: string;
-  title: string;
-  original_filename: string;
-  size_bytes: string;
-  created_at: Date;
-  object_key: string;
-  status: string;
-}
-const serialize = (row: Row): Recording => ({
+const serialize = (row: AssetModel): Recording => ({
   id: row.id,
   title: row.title,
-  originalFilename: row.original_filename,
-  sizeBytes: Number(row.size_bytes),
-  createdAt: row.created_at.toISOString(),
+  originalFilename: row.originalFilename,
+  sizeBytes: Number(row.sizeBytes),
+  createdAt: row.createdAt.toISOString(),
 });
 
 @Injectable()
@@ -30,21 +22,20 @@ export class RecordingsService {
   constructor(private readonly db: DatabaseService, private readonly storage: StorageService) {}
 
   async list(userId: string, offset = 0): Promise<Recording[]> {
-    const result = await this.db.pool.query<Row>(
-      'SELECT * FROM recordings WHERE user_id = $1 AND status = $2 ORDER BY created_at DESC, id DESC LIMIT 100 OFFSET $3',
-      [userId, 'ready', offset],
-    );
-    return result.rows.map(serialize);
+    const recordings = await this.db.client.asset.findMany({
+      where: { userId, status: 'ready' },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: 100,
+      skip: offset,
+    });
+    return recordings.map(serialize);
   }
 
-  private async owned(userId: string, id: string): Promise<Row> {
+  private async owned(userId: string, id: string): Promise<AssetModel> {
     parse(z.string().uuid(), id);
-    const result = await this.db.pool.query<Row>(
-      'SELECT * FROM recordings WHERE id = $1 AND user_id = $2',
-      [id, userId],
-    );
-    if (!result.rows[0]) throw new NotFoundException('Nie znaleziono nagrania');
-    return result.rows[0];
+    const recording = await this.db.client.asset.findFirst({ where: { id, userId } });
+    if (!recording) throw new NotFoundException('Recording not found');
+    return recording;
   }
 
   async initiate(userId: string, input: UploadInput) {
@@ -56,10 +47,16 @@ export class RecordingsService {
     const id = randomUUID();
     const key = `${userId}/${id}.mp3`;
     const uploadUrl = await this.storage.upload(key);
-    await this.db.pool.query(
-      'INSERT INTO recordings(id, user_id, title, original_filename, object_key, size_bytes) VALUES ($1, $2, $3, $4, $5, $6)',
-      [id, userId, input.title, input.filename, key, input.sizeBytes],
-    );
+    await this.db.client.asset.create({
+      data: {
+        id,
+        userId,
+        title: input.title,
+        originalFilename: input.filename,
+        objectKey: key,
+        sizeBytes: BigInt(input.sizeBytes),
+      },
+    });
     return { id, uploadUrl };
   }
 
@@ -68,7 +65,7 @@ export class RecordingsService {
     if (row.status === 'ready') return serialize(row);
     let metadata;
     try {
-      metadata = await this.storage.head(row.object_key);
+      metadata = await this.storage.head(row.objectKey);
     } catch (error) {
       if (
         (error as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode === 404
@@ -76,34 +73,30 @@ export class RecordingsService {
       throw error;
     }
     if (
-      metadata.ContentLength !== Number(row.size_bytes) || metadata.ContentType !== 'audio/mpeg' ||
-      !looksLikeMp3(await this.storage.prefix(row.object_key))
+      metadata.ContentLength !== Number(row.sizeBytes) || metadata.ContentType !== 'audio/mpeg' ||
+      !looksLikeMp3(await this.storage.prefix(row.objectKey))
     ) {
-      await this.storage.remove(row.object_key);
-      await this.db.pool.query('DELETE FROM recordings WHERE id = $1 AND user_id = $2', [
-        id,
-        userId,
-      ]);
+      await this.storage.remove(row.objectKey);
+      await this.db.client.asset.deleteMany({ where: { id, userId } });
       throw new BadRequestException('Nieprawidłowy plik MP3 lub rozmiar');
     }
-    await this.db.pool.query('UPDATE recordings SET status = $1 WHERE id = $2 AND user_id = $3', [
-      'ready',
-      id,
-      userId,
-    ]);
+    await this.db.client.asset.updateMany({
+      where: { id, userId },
+      data: { status: 'ready' },
+    });
     return serialize(row);
   }
 
   async playback(userId: string, id: string) {
     const row = await this.owned(userId, id);
     if (row.status !== 'ready') throw new NotFoundException('Nagranie nie jest gotowe');
-    return { url: await this.storage.playback(row.object_key), expiresIn: 3600 };
+    return { url: await this.storage.playback(row.objectKey), expiresIn: 3600 };
   }
 
   async remove(userId: string, id: string) {
     const row = await this.owned(userId, id);
-    await this.storage.remove(row.object_key);
-    await this.db.pool.query('DELETE FROM recordings WHERE id = $1 AND user_id = $2', [id, userId]);
+    await this.storage.remove(row.objectKey);
+    await this.db.client.asset.deleteMany({ where: { id, userId } });
     return { ok: true };
   }
 }

@@ -1,7 +1,8 @@
 import { readonly, ref, shallowRef } from 'vue';
-import type { Recording } from '@people/contracts';
-import { recordingsService } from '../services/recordings.service';
+import type { Recording } from '@vermont/contracts';
+import { recordingsService } from '@/services/recordings.service';
 import { useNotifications } from './useNotifications';
+import { useListeningLibrary } from './useListeningLibrary';
 
 const current = ref<Recording | null>(null);
 const audio = shallowRef<HTMLAudioElement | null>(null);
@@ -13,6 +14,7 @@ let playRequest = 0;
 
 export function usePlayer() {
   const { showError, clearError } = useNotifications();
+  const library = useListeningLibrary();
 
   function attach(element: HTMLAudioElement | null) { audio.value = element; }
   function setQueue(recordings: readonly Recording[]) { queue = [...recordings]; }
@@ -71,6 +73,7 @@ export function usePlayer() {
   }
 
   function removeFromQueue(id: string) {
+    library.forget(id);
     const remaining = queue.filter((recording) => recording.id !== id);
     if (current.value?.id === id) reset();
     queue = remaining;
@@ -83,10 +86,22 @@ export function usePlayer() {
     showError('Nie można odtworzyć MP3. Link mógł wygasnąć — wybierz nagranie ponownie.');
   }
 
-  function setPlaying(value: boolean) { playing.value = value; }
+  function setPlaying(value: boolean) {
+    playing.value = value;
+    if (value && current.value && audioUrl.value) library.remember(current.value);
+  }
 
   return {
-    current: readonly(current), playing: readonly(playing), loading: readonly(loading),
-    attach, setQueue, play, next, reset, removeFromQueue, playbackError, setPlaying,
+    current: readonly(current),
+    playing: readonly(playing),
+    loading: readonly(loading),
+    attach,
+    setQueue,
+    play,
+    next,
+    reset,
+    removeFromQueue,
+    playbackError,
+    setPlaying
   };
 }

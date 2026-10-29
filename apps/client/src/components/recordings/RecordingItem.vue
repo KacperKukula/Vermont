@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import type { Recording } from '@people/contracts';
-import { formatDate, formatSize } from '../../utils/format';
+import { computed } from 'vue';
+import type { Recording } from '@vermont/contracts';
+import { useListeningLibrary } from '@/composables/useListeningLibrary';
+import RecordingCategorySelect from './RecordingCategorySelect.vue';
+import { formatDate, formatSize } from '@/utils/format';
 
-defineProps<{
+const props = defineProps<{
   recording: Recording;
   index: number;
   active: boolean;
@@ -11,32 +14,35 @@ defineProps<{
   deleting: boolean;
 }>();
 defineEmits<{ play: [recording: Recording]; remove: [recording: Recording] }>();
+const library = useListeningLibrary();
+const category = computed({
+  get: () => library.categoryOf(props.recording.id),
+  set: (value) => library.setCategory(props.recording.id, value)
+});
 </script>
 
 <template>
-  <li class="recording-item" :class="{ active }">
-    <button class="play-button" :aria-label="`${active && playing ? 'Wstrzymaj' : 'Odtwórz'} ${recording.title}`" :disabled="loading && active" @click="$emit('play', recording)">
-      <span class="track-number">{{ String(index + 1).padStart(2, '0') }}</span>
-      <span class="play-symbol">{{ active && playing ? 'Ⅱ' : '▶' }}</span>
+  <li class="recording-item" :class="{ 'recording-item--active': active }">
+    <button class="recording-item__play" :aria-label="`${active && playing ? 'Pause' : 'Play'} ${recording.title}`" :disabled="loading && active" @click="$emit('play', recording)">
+      <span class="recording-item__number">{{ String(index + 1).padStart(2, '0') }}</span>
+      <span class="recording-item__symbol">{{ active && playing ? 'Ⅱ' : '▶' }}</span>
     </button>
-    <div class="track-info">
+    <div class="recording-item__info">
       <button :disabled="loading && active" @click="$emit('play', recording)">{{ recording.title }}</button>
       <span>{{ recording.originalFilename }}</span>
     </div>
-    <div class="track-meta">
+    <RecordingCategorySelect v-model="category" :label="`Category for ${recording.title}`" />
+    <div class="recording-item__meta">
       <span>{{ formatSize(recording.sizeBytes) }}</span>
       <time :datetime="recording.createdAt">{{ formatDate(recording.createdAt) }}</time>
     </div>
-    <button class="delete-button" :disabled="deleting" :aria-label="`Usuń ${recording.title}`" @click="$emit('remove', recording)">
+    <button class="recording-item__delete" :disabled="deleting" :aria-label="`Delete ${recording.title}`" @click="$emit('remove', recording)">
       {{ deleting ? '…' : '×' }}
     </button>
   </li>
 </template>
 
 <style scoped lang="scss">
-@use '../../styles/tokens' as tokens;
-@use '../../styles/mixins' as mixins;
-
 .recording-item {
   display: flex;
   align-items: center;
@@ -48,30 +54,31 @@ defineEmits<{ play: [recording: Recording]; remove: [recording: Recording] }>();
     background: tokens.$color-track-hover;
   }
 
-  &.active {
+  &--active {
     background: tokens.$color-track-active;
 
-    .track-info > button,
-    .play-symbol {
+    .recording-item__info > button,
+    .recording-item__symbol {
       color: tokens.$color-accent;
     }
 
-    .track-number {
+    .recording-item__number {
       display: none;
     }
 
-    .play-symbol {
+    .recording-item__symbol {
       display: block;
     }
   }
 
   @include mixins.mobile {
+    flex-wrap: wrap;
     gap: tokens.$space-2;
     padding-inline: 2px;
   }
 }
 
-.play-button {
+.recording-item__play {
   flex: 0 0 35px;
   height: 36px;
   border: 0;
@@ -79,27 +86,27 @@ defineEmits<{ play: [recording: Recording]; remove: [recording: Recording] }>();
   color: tokens.$color-text-muted;
   font-size: tokens.$font-size-label;
 
-  .play-symbol {
+  .recording-item__symbol {
     display: none;
   }
 
   &:hover {
-    .play-symbol {
+    .recording-item__symbol {
       display: block;
     }
 
-    .track-number {
+    .recording-item__number {
       display: none;
     }
   }
 }
 
-.track-info {
+.recording-item__info {
   display: flex;
   flex: 1;
   flex-direction: column;
   gap: 6px;
-  min-width: 0;
+  min-width: 100px;
 
   > button {
     @include mixins.text-truncate;
@@ -121,7 +128,7 @@ defineEmits<{ play: [recording: Recording]; remove: [recording: Recording] }>();
   }
 }
 
-.track-meta {
+.recording-item__meta {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -142,7 +149,7 @@ defineEmits<{ play: [recording: Recording]; remove: [recording: Recording] }>();
   }
 }
 
-.delete-button {
+.recording-item__delete {
   padding: 4px 7px;
   border: 0;
   background: transparent;

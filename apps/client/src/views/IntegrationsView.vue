@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import McpTokenCard from '../components/integrations/McpTokenCard.vue';
+import McpTokenCard from '@/components/integrations/McpTokenCard.vue';
 </script>
 
 <template>

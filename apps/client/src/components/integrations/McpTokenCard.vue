@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { mcpService } from '../../services/mcp.service';
-import { useNotifications } from '../../composables/useNotifications';
+import { mcpService } from '@/services/mcp.service';
+import { useNotifications } from '@/composables/useNotifications';
 
 const token = ref('');
 const busy = ref(false);
@@ -49,9 +49,6 @@ function selectToken(event: FocusEvent) { (event.target as HTMLTextAreaElement).
 </template>
 
 <style scoped lang="scss">
-@use '../../styles/tokens' as tokens;
-@use '../../styles/mixins' as mixins;
-
 .integration-card {
   padding: tokens.$space-7;
   border: 1px solid tokens.$color-border;

@@ -11,7 +11,15 @@ export function useNotifications() {
   function showNotice(message: string) { notice.value = message; }
   function clearError() { error.value = ''; }
   function clearNotice() { notice.value = ''; }
-  function clear() { clearError(); clearNotice(); }
+  function clearNotif() { clearError(); clearNotice(); }
 
-  return { error: readonly(error), notice: readonly(notice), showError, showNotice, clearError, clearNotice, clear };
+  return { 
+    error: readonly(error),
+    notice: readonly(notice),
+    showError,
+    showNotice,
+    clearError,
+    clearNotice,
+    clearNotif
+  };
 }

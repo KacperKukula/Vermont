@@ -1,9 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Recording } from '@people/contracts';
-import { recordingsService } from '../services/recordings.service';
+import type { Recording } from '@vermont/contracts';
+import { recordingsService } from '@/services/recordings.service';
 import { usePlayer } from './usePlayer';
 
-vi.mock('../services/recordings.service', () => ({
+const library = vi.hoisted(() => ({ remember: vi.fn(), forget: vi.fn() }));
+vi.mock('@/composables/useListeningLibrary', () => ({
+  useListeningLibrary: () => library
+}));
+
+vi.mock('@/services/recordings.service', () => ({
   recordingsService: { playback: vi.fn() },
 }));
 
@@ -66,5 +71,25 @@ describe('shared audio player', () => {
     await pending;
     expect(player.current.value).toBeNull();
     expect(element.play).not.toHaveBeenCalled();
+  });
+
+  it('adds a recording to history only when audio actually starts playing', async () => {
+    await player.play(recording('one'));
+    expect(library.remember).not.toHaveBeenCalled();
+    player.setPlaying(true);
+    expect(library.remember).toHaveBeenCalledWith(recording('one'));
+    player.setPlaying(false);
+    expect(library.remember).toHaveBeenCalledOnce();
+  });
+
+  it('does not add failed playback attempts to history', async () => {
+    vi.mocked(recordingsService.playback).mockRejectedValue(new Error('Unavailable'));
+    await player.play(recording('one'));
+    expect(library.remember).not.toHaveBeenCalled();
+  });
+
+  it('removes a deleted recording from history', () => {
+    player.removeFromQueue('one');
+    expect(library.forget).toHaveBeenCalledWith('one');
   });
 });

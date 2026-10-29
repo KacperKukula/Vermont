@@ -13,9 +13,6 @@
 </template>
 
 <style scoped lang="scss">
-@use '../../styles/tokens' as tokens;
-@use '../../styles/mixins' as mixins;
-
 .welcome-copy {
   h1 {
     margin-bottom: 25px;

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router';
-import { useAuth } from '../composables/useAuth';
-import AppHeader from '../components/layout/AppHeader.vue';
-import AppNotifications from '../components/layout/AppNotifications.vue';
-import AudioPlayer from '../components/player/AudioPlayer.vue';
+import { useAuth } from '@/composables/useAuth';
+import AppHeader from '@/components/layout/AppHeader.vue';
+import AppNotifications from '@/components/layout/AppNotifications.vue';
+import AudioPlayer from '@/components/player/AudioPlayer.vue';
 
 const { user } = useAuth();
 </script>
@@ -19,9 +19,6 @@ const { user } = useAuth();
 </template>
 
 <style scoped lang="scss">
-@use '../styles/tokens' as tokens;
-@use '../styles/mixins' as mixins;
-
 .shell {
   max-width: tokens.$container-width;
   margin: auto;

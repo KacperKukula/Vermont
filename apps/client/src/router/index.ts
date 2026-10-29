@@ -1,7 +1,7 @@
 import { createRouter, type RouterHistory } from 'vue-router';
-import { useAuth } from '../composables/useAuth';
-import { useNotifications } from '../composables/useNotifications';
-import { useUploadStatus } from '../composables/useUpload';
+import { useAuth } from '@/composables/useAuth';
+import { useNotifications } from '@/composables/useNotifications';
+import { useUploadStatus } from '@/composables/useUpload';
 import { routes } from './routes';
 
 declare module 'vue-router' {
@@ -27,9 +27,9 @@ export function createAppRouter(history: RouterHistory) {
     }
 
     const auth = useAuth();
-    try {
-      await auth.initialize();
-    } catch (cause) {
+    
+    try { await auth.restoreSession(); }
+    catch (cause) {
       notifications.showError(cause);
       // Let the login page render even if the backend is temporarily unavailable.
       if (to.meta.requiresAuth) return { name: 'login', query: { redirect: to.fullPath } };
@@ -38,7 +38,7 @@ export function createAppRouter(history: RouterHistory) {
     if (to.meta.requiresAuth && !auth.user.value) {
       return { name: 'login', query: { redirect: to.fullPath } };
     }
-    if (to.meta.guestOnly && auth.user.value) return { name: 'library' };
+    if (to.meta.guestOnly && auth.user.value) return { name: 'dashboard' };
   });
 
   router.afterEach((to, _from, failure) => {

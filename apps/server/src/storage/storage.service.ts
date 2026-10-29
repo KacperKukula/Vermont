@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import {
   DeleteObjectCommand,
   GetObjectCommand,
@@ -8,19 +8,42 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { config } from '../config.js';
+import { z } from 'zod';
+
+const storageConfigSchema = z.object({
+  R2_ENDPOINT: z.string().url(),
+  R2_BUCKET: z.string().trim().min(1),
+  R2_ACCESS_KEY_ID: z.string().trim().min(1),
+  R2_SECRET_ACCESS_KEY: z.string().trim().min(1),
+});
 
 @Injectable()
 export class StorageService {
-  private readonly client = new S3Client({
-    region: 'auto',
-    endpoint: config.R2_ENDPOINT,
-    credentials: {
-      accessKeyId: config.R2_ACCESS_KEY_ID,
-      secretAccessKey: config.R2_SECRET_ACCESS_KEY,
-    },
-    requestChecksumCalculation: 'WHEN_REQUIRED',
-    responseChecksumValidation: 'WHEN_REQUIRED',
-  });
+  private readonly settings = storageConfigSchema.safeParse(config);
+  private storageClient?: S3Client;
+
+  constructor() {
+    if (!this.settings.success) {
+      new Logger(StorageService.name).warn('Magazyn plików jest niedostępny: konfiguracja R2 jest niepełna lub nieprawidłowa. Pozostałe moduły mogą działać.');
+    }
+  }
+
+  private get client(): S3Client {
+    if (!this.settings.success) {
+      throw new ServiceUnavailableException('Magazyn plików jest niedostępny. Skontaktuj się z administratorem.');
+    }
+    const settings = this.settings.data;
+    return this.storageClient ??= new S3Client({
+      region: 'auto',
+      endpoint: settings.R2_ENDPOINT,
+      credentials: {
+        accessKeyId: settings.R2_ACCESS_KEY_ID,
+        secretAccessKey: settings.R2_SECRET_ACCESS_KEY,
+      },
+      requestChecksumCalculation: 'WHEN_REQUIRED',
+      responseChecksumValidation: 'WHEN_REQUIRED',
+    });
+  }
 
   upload(key: string) {
     return getSignedUrl(

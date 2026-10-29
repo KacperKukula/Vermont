@@ -1,7 +1,7 @@
 import { strict as assert } from 'node:assert';
 import { hashPassword, verifyPassword, tokenHash } from '../src/password.ts';
 import { looksLikeMp3 } from '../src/mp3.ts';
-import { credentialsSchema, uploadSchema } from '@people/contracts';
+import { credentialsSchema, uploadSchema } from '@vermont/contracts';
 
 Deno.test('passwords are salted and verified', async () => {
   const hash = await hashPassword('a-long-test-password');

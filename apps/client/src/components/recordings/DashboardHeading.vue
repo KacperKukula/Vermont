@@ -1,28 +1,29 @@
 <script setup lang="ts">
-import { formatSize } from '../../utils/format';
+import { formatSize } from '@/utils/format';
 
 defineProps<{ count: number; totalBytes: number; hasMore: boolean }>();
 </script>
 
 <template>
-  <section class="library-heading">
+  <section class="dashboard-heading">
     <div>
-      <span class="eyebrow">TWOJA PRYWATNA PRZESTRZEŃ</span>
-      <h1>Biblioteka<span class="brand-dot">.</span></h1>
-      <p>Wszystkie Twoje brzmienia w jednym miejscu.</p>
+      <span class="eyebrow">YOUR PRIVATE LISTENING SPACE</span>
+      <h1>Dashboard<span class="dashboard-heading__dot">.</span></h1>
+      <p>Pick up where you left off, or find your next listen.</p>
     </div>
-    <div class="library-stats">
+    <div class="dashboard-heading__stats">
       <strong>{{ count }}{{ hasMore ? '+' : '' }}</strong>
-      <span>nagrań · {{ formatSize(totalBytes) }}{{ hasMore ? '+' : '' }}</span>
+      <span>{{ count === 1 && !hasMore ? 'file' : 'files' }} · {{ formatSize(totalBytes) }}{{ hasMore ? '+' : '' }}</span>
     </div>
   </section>
 </template>
 
 <style scoped lang="scss">
-@use '../../styles/tokens' as tokens;
-@use '../../styles/mixins' as mixins;
+.dashboard-heading__dot {
+  color: tokens.$color-accent;
+}
 
-.library-heading {
+.dashboard-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -59,7 +60,7 @@ defineProps<{ count: number; totalBytes: number; hasMore: boolean }>();
   }
 }
 
-.library-stats {
+.dashboard-heading__stats {
   display: flex;
   flex-direction: column;
   gap: 6px;

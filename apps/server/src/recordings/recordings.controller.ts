@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { z } from 'zod';
-import { uploadSchema } from '@people/contracts';
+import { uploadSchema } from '@vermont/contracts';
 import type { AuthRequest } from '../auth/auth-request.type.js';
 import { SessionGuard } from '../auth/session.guard.js';
 import { parse } from '../validation.js';

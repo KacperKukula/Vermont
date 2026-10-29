@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue';
-import { usePlayer } from '../../composables/usePlayer';
+import { usePlayer } from '@/composables/usePlayer';
 
 const audio = ref<HTMLAudioElement>();
 const { current, playing, loading, attach, next, reset, playbackError, setPlaying } = usePlayer();
@@ -16,15 +16,12 @@ onBeforeUnmount(() => { reset(); attach(null); });
       <strong>{{ current?.title ?? 'Twój następny ulubiony dźwięk' }}</strong>
       <span>{{ loading ? 'Ładowanie…' : current ? 'Twoja prywatna biblioteka' : 'Wybierz nagranie i zacznij słuchać' }}</span>
     </div>
-    <audio ref="audio" controls preload="none" @play="setPlaying(true)" @pause="setPlaying(false)" @ended="next" @error="playbackError"></audio>
+    <audio ref="audio" controls preload="none" @playing="setPlaying(true)" @pause="setPlaying(false)" @ended="next" @error="playbackError"></audio>
     <button class="button ghost small next-track" :disabled="!current" aria-label="Następne nagranie" @click="next">Następne →</button>
   </section>
 </template>
 
 <style scoped lang="scss">
-@use '../../styles/tokens' as tokens;
-@use '../../styles/mixins' as mixins;
-
 .player {
   position: fixed;
   z-index: tokens.$z-index-player;

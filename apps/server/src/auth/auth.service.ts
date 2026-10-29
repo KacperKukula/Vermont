@@ -1,5 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import type { User } from '@people/contracts';
+import type { User } from '@vermont/contracts';
 import { DatabaseService } from '../database/database.service.js';
 import { newToken, tokenHash } from '../password.js';
 import { SESSION_LIFETIME } from './session.constants.js';
@@ -12,72 +12,63 @@ export class AuthService {
     if (!token) {
       throw new UnauthorizedException();
     }
-
-    const result = await this.databaseService.pool.query<User>(
-      'SELECT u.id, u.email FROM users u JOIN sessions s ON s.user_id = u.id WHERE s.token_hash = $1 AND s.expires_at > now()',
-      [tokenHash(token)],
-    );
-    if (!result.rows[0]) {
+    const session = await this.databaseService.client.session.findFirst({
+      where: { tokenHash: tokenHash(token), expiresAt: { gt: new Date() } },
+      select: { user: { select: { id: true, email: true } } },
+    });
+    if (!session) {
       throw new UnauthorizedException();
     }
-
-    return result.rows[0];
+    return session.user;
   }
 
   async createSession(userId: string): Promise<string> {
     const token = newToken();
-    await this.databaseService.pool.query('DELETE FROM sessions WHERE expires_at <= now()');
-    await this.databaseService.pool.query(
-      'INSERT INTO sessions(token_hash, user_id, expires_at) VALUES ($1, $2, $3)',
-      [tokenHash(token), userId, new Date(Date.now() + SESSION_LIFETIME)],
-    );
+    await this.databaseService.client.session.deleteMany({
+      where: { expiresAt: { lte: new Date() } },
+    });
+    await this.databaseService.client.session.create({
+      data: {
+        tokenHash: tokenHash(token),
+        userId,
+        expiresAt: new Date(Date.now() + SESSION_LIFETIME),
+      },
+    });
     return token;
   }
 
   async logout(token: string | undefined): Promise<void> {
     if (token) {
-      await this.databaseService.pool.query('DELETE FROM sessions WHERE token_hash = $1', [
-        tokenHash(token),
-      ]);
+      await this.databaseService.client.session.deleteMany({
+        where: { tokenHash: tokenHash(token) },
+      });
     }
   }
 
   async apiToken(token: string): Promise<User> {
-    const result = await this.databaseService.pool.query<User>(
-      'SELECT u.id, u.email FROM users u JOIN api_tokens t ON t.user_id = u.id WHERE t.token_hash = $1',
-      [tokenHash(token)],
-    );
-    if (!result.rows[0]) {
+    const apiToken = await this.databaseService.client.apiToken.findUnique({
+      where: { tokenHash: tokenHash(token) },
+      select: { user: { select: { id: true, email: true } } },
+    });
+    if (!apiToken) {
       throw new UnauthorizedException();
     }
-    return result.rows[0];
+    return apiToken.user;
   }
 
   async issueToken(userId: string) {
     const token = newToken();
-    const client = await this.databaseService.pool.connect();
-
-    try {
-      await client.query('BEGIN');
-      await client.query('SELECT id FROM users WHERE id = $1 FOR UPDATE', [userId]);
-      await client.query('DELETE FROM api_tokens WHERE user_id = $1', [userId]);
-      await client.query('INSERT INTO api_tokens(token_hash, user_id) VALUES ($1, $2)', [
-        tokenHash(token),
-        userId,
-      ]);
-      await client.query('COMMIT');
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
-    }
-
+    await this.databaseService.client.$transaction(async (transaction) => {
+      // Serialize rotations so concurrent requests leave only one token per user.
+      await transaction.$queryRaw`SELECT id FROM users WHERE id = ${userId}::uuid FOR UPDATE`;
+      await transaction.apiToken.deleteMany({ where: { userId } });
+      await transaction.apiToken.create({ data: { tokenHash: tokenHash(token), userId } });
+    });
     return { token };
   }
 
   async revokeToken(userId: string) {
-    await this.databaseService.pool.query('DELETE FROM api_tokens WHERE user_id = $1', [userId]);
+    await this.databaseService.client.apiToken.deleteMany({ where: { userId } });
     return { ok: true };
   }
 }

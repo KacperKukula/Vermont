@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import vermontLogo from '../../assets/vermont-logo.svg';
+import vermontLogo from '@/assets/vermont-logo.svg';
 import { RouterLink, useRouter } from 'vue-router';
-import { useAuth } from '../../composables/useAuth';
-import { useNotifications } from '../../composables/useNotifications';
-import { usePlayer } from '../../composables/usePlayer';
-import { useUploadStatus } from '../../composables/useUpload';
+import { useAuth } from '@/composables/useAuth';
+import { useNotifications } from '@/composables/useNotifications';
+import { usePlayer } from '@/composables/usePlayer';
+import { useUploadStatus } from '@/composables/useUpload';
 
 const { user, logout } = useAuth();
 const { uploading } = useUploadStatus();
 const { reset } = usePlayer();
-const { clear, showError } = useNotifications();
+const { clearNotif, showError } = useNotifications();
 const router = useRouter();
 const loggingOut = ref(false);
 
@@ -20,7 +20,7 @@ async function signOut() {
   try {
     await logout();
     reset();
-    clear();
+    clearNotif();
     await router.replace({ name: 'login' });
   } catch (cause) {
     showError(cause);
@@ -37,7 +37,7 @@ async function signOut() {
       <span>Vermont</span>
     </RouterLink>
     <nav v-if="user" class="main-nav" aria-label="Menu główne">
-      <RouterLink :to="{ name: 'library' }">Biblioteka</RouterLink>
+      <RouterLink :to="{ name: 'dashboard' }">Dashboard</RouterLink>
       <RouterLink :to="{ name: 'integrations' }">Integracje</RouterLink>
     </nav>
     <div v-if="user" class="account">
@@ -51,9 +51,6 @@ async function signOut() {
 </template>
 
 <style scoped lang="scss">
-@use '../../styles/tokens' as tokens;
-@use '../../styles/mixins' as mixins;
-
 .header {
   display: flex;
   align-items: center;
