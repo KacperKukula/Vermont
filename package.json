@@ -1,14 +1,24 @@
 {
-  "name": "people-mp3",
+  "name": "vermont",
   "private": true,
   "packageManager": "npm@12.1.0",
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
     "check": "turbo run check",
     "test": "turbo run test",
-    "db:migrate": "npm run db:migrate -w @people/server"
+    "build:contracts": "turbo run build --filter=./packages/contracts",
+    "db:migrate": "turbo run db:migrate --filter=@vermont/server",
+    "db:generate": "turbo run db:generate --filter=@vermont/server",
+    "db:validate": "turbo run db:validate --filter=@vermont/server",
+    "db:studio": "turbo run db:studio --filter=@vermont/server"
   },
-  "devDependencies": { "turbo": "^2.5.0", "typescript": "^5.9.3" }
+  "devDependencies": {
+    "turbo": "^2.5.0",
+    "typescript": "^5.9.3"
+  }
 }

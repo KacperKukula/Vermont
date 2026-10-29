@@ -1,9 +1,11 @@
 import pg from 'pg';
 import { readdir, readFile } from 'node:fs/promises';
 
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) throw new Error('Brak DATABASE_URL');
-const client = new pg.Client({ connectionString });
+import { databaseSettings } from '../src/database/database-settings.ts';
+
+const settings = databaseSettings(process.env);
+if (!settings) throw new Error('Invalid database configuration: check DATABASE_URL, DATABASE_LOGIN and DATABASE_PASSWORD');
+const client = new pg.Client(settings);
 await client.connect();
 try {
   await client.query('SELECT pg_advisory_lock(913027)');

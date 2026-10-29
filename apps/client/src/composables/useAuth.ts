@@ -1,42 +1,49 @@
 import { readonly, ref } from 'vue';
-import type { Credentials, User } from '@people/contracts';
-import { authService } from '../services/auth.service';
-import { ApiError } from '../services/http';
+import type { Credentials, User } from '@vermont/contracts';
+import { authService } from '@/services/auth.service';
+import { ApiError } from '@/services/http';
 
 const user = ref<User | null>(null);
-let initialized = false;
-let initialization: Promise<void> | undefined;
 
 export function useAuth() {
-  async function initialize() {
-    if (initialized) return;
-    if (!initialization) {
-      initialization = (async () => {
-        try {
-          user.value = await authService.me();
-          initialized = true;
-        } catch (cause) {
-          if (!(cause instanceof ApiError && cause.status === 401)) throw cause;
-          user.value = null;
-          initialized = true;
-        } finally {
-          initialization = undefined;
-        }
-      })();
+
+  /**
+   * Initializes authentication 
+   * @returns 
+   */
+  async function restoreSession() {
+    if (user.value!!) return;
+    else {
+      try { user.value = await authService.me(); }
+      catch (cause) { 
+        if (!(cause instanceof ApiError && cause.status === 401)) throw cause
+        user.value = null;
+      }
     }
-    await initialization;
   }
 
-  async function authenticate(mode: 'login' | 'register', credentials: Credentials) {
-    user.value = await authService[mode](credentials);
-    initialized = true;
+  /**
+   * Logs in the user with the provided credentials.
+   * @param credentials The user's login credentials (email and password)
+   */
+  async function login(credentials: Credentials) {
+    user.value = await authService.login(credentials);
+  }
+
+  async function register(credentials: Credentials) {
+    user.value = await authService.register(credentials);
   }
 
   async function logout() {
     await authService.logout();
     user.value = null;
-    initialized = true;
   }
 
-  return { user: readonly(user), initialize, authenticate, logout };
+  return {
+    user: readonly(user),
+    restoreSession,
+    login,
+    register,
+    logout
+  };
 }

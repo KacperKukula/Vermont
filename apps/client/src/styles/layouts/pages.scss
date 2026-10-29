@@ -1,5 +1,5 @@
-@use '../tokens' as tokens;
-@use '../mixins' as mixins;
+@use '@styles/tokens' as tokens;
+@use '@styles/mixins' as mixins;
 
 // Shared page containers; component internals belong in components/.
 .welcome {
@@ -29,28 +29,6 @@
   @include mixins.mobile {
     padding-top: 30px;
     padding-bottom: 200px;
-  }
-}
-
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 310px;
-  gap: tokens.$space-7;
-  align-items: start;
-
-  @include mixins.tablet {
-    grid-template-columns: minmax(0, 1fr) 280px;
-    gap: tokens.$space-5;
-  }
-
-  @include mixins.mobile {
-    grid-template-columns: 1fr;
-  }
-}
-
-.sidebar {
-  @include mixins.mobile {
-    grid-row: 1;
   }
 }
 

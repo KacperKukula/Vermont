@@ -1,0 +1,65 @@
+@use 'sass:color';
+@use '@styles/tokens' as tokens;
+@use '@styles/mixins' as mixins;
+
+.auth-card {
+  padding: tokens.$space-9;
+  border: 1px solid tokens.$color-border;
+  border-radius: tokens.$radius-xl;
+  background: tokens.$color-surface;
+  box-shadow: tokens.$shadow-card;
+
+  &__title {
+    margin-bottom: 10px;
+    font-size: 27px;
+    letter-spacing: -0.7px;
+  }
+
+  &__description {
+    font-size: tokens.$font-size-label;
+  }
+
+  &__eyebrow {
+    display: block;
+    margin-bottom: tokens.$space-5;
+    color: tokens.$color-accent;
+    font-size: 9px;
+    font-weight: tokens.$font-weight-bold;
+    letter-spacing: 2px;
+  }
+
+  &__submit {
+    width: 100%;
+    margin-top: 26px;
+    background: tokens.$color-accent;
+    color: tokens.$color-on-accent;
+
+    &:hover:not(:disabled) {
+      background: color.adjust(tokens.$color-accent, $lightness: 6%);
+    }
+  }
+
+  @include mixins.tablet {
+    padding: tokens.$space-7;
+  }
+
+  @include mixins.mobile {
+    padding: 27px;
+
+    .auth-card__title {
+      font-size: 25px;
+    }
+  }
+}
+
+.auth-card__switch {
+  margin: 25px 0 0;
+  font-size: tokens.$font-size-sm;
+  text-align: center;
+
+  .auth-card__switch-link {
+    padding: tokens.$space-1;
+    color: tokens.$color-accent;
+    text-decoration: none;
+  }
+}

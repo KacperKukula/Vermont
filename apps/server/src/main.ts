@@ -5,8 +5,11 @@ import helmet from 'helmet';
 import express from 'express';
 import { config } from './config.js';
 import { AppModule } from './app.module.js';
+import { LoggingExceptionFilter } from './logging-exception.filter.js';
 
 const app = await NestFactory.create(AppModule, { bodyParser: false });
+const isDevelopment = process.argv.includes('--dev') || process.env.NODE_ENV === 'development';
+app.useGlobalFilters(new LoggingExceptionFilter(app.getHttpAdapter(), isDevelopment));
 app.use(helmet());
 app.enableCors({ origin: config.CLIENT_ORIGIN, credentials: true });
 app.use(express.json({ limit: '32kb' }));

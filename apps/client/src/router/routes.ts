@@ -1,34 +1,53 @@
-import AppLayout from '../layouts/AppLayout.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { paths } from './paths';
 
 export const routes = {
-    path: '/',
-    component: AppLayout,
-    children: [
-        { path: '', redirect: { name: 'library' } },
-        {
-            path: 'login', name: 'login',
-            meta: { guestOnly: true, title: 'Logowanie' },
-            component: () => import('../views/LoginView.vue'),
-        },
-        {
-            path: 'register', name: 'register',
-            meta: { guestOnly: true, title: 'Rejestracja' },
-            component: () => import('../views/RegisterView.vue'),
-        },
-        {
-            path: 'library', name: 'library',
-            meta: { requiresAuth: true, title: 'Biblioteka' },
-            component: () => import('../views/LibraryView.vue'),
-        },
-        {
-            path: 'integrations', name: 'integrations',
-            meta: { requiresAuth: true, title: 'Integracje' },
-            component: () => import('../views/IntegrationsView.vue'),
-        },
-        {
-            path: ':pathMatch(.*)*', name: 'not-found',
-            meta: { title: 'Nie znaleziono strony' },
-            component: () => import('../views/NotFoundView.vue'),
-        },
-    ],
-}
+  path: paths.root,
+  component: AppLayout,
+  children: [
+    { path: '', redirect: { name: 'dashboard' } },
+    {
+      path: paths.login,
+      name: 'login',
+      component: () => import('@/views/LoginView.vue'),
+      meta: {
+        guestOnly: true,
+        title: 'Logowanie'
+      },
+    },
+    {
+      path: paths.register,
+      name: 'register',
+      component: () => import('@/views/RegisterView.vue'),
+      meta: {
+        guestOnly: true,
+        title: 'Rejestracja'
+      },
+    },
+    {
+      path: paths.dashboard,
+      alias: paths.library,
+      name: 'dashboard',
+      component: () => import('@/views/DashboardView.vue'),
+      meta: {
+        requiresAuth: true,
+        title: 'Dashboard'
+      },
+    },
+    {
+      path: paths.integrations,
+      name: 'integrations',
+      component: () => import('@/views/IntegrationsView.vue'),
+      meta: {
+        requiresAuth: true,
+        title: 'Integracje'
+      },
+    },
+    {
+      path: paths.notFound,
+      name: 'not-found',
+      component: () => import('@/views/NotFoundView.vue'),
+      meta: { title: 'Nie znaleziono strony' },
+    },
+  ],
+};

@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import AuthIntro from '../components/auth/AuthIntro.vue';
-import AuthForm from '../components/auth/AuthForm.vue';
+import AuthIntro from '@/components/auth/AuthIntro.vue';
+import LoginForm from '@/components/auth/LoginForm.vue';
 </script>
 
 <template>
   <main class="welcome">
     <AuthIntro />
-    <AuthForm mode="login" />
+    <LoginForm />
   </main>
 </template>

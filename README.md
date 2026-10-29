@@ -27,10 +27,16 @@ Polecenia wykonuj w katalogu głównym. W PowerShell, jeżeli polityka blokuje `
 ```powershell
 npm install
 Copy-Item .env.example .env
-docker compose -f infra/compose.yaml up -d
+docker compose -f infra/compose.dev.yaml up -d
 ```
 
-Uzupełnij w `.env` prawdziwe dane R2:
+### pgAdmin
+
+Compose uruchamia również pgAdmin pod adresem http://localhost:5050. Zaloguj się adresem `admin@example.com` i hasłem `vermont123!` (lokalne dane logowania do panelu pgAdmin). Serwer **Vermont** jest dodawany automatycznie przy pierwszym uruchomieniu. Przy połączeniu wpisz hasło bazy: `vermont123!`.
+
+pgAdmin łączy się z hostem `postgres` na porcie `5432` wewnątrz sieci Compose. Aplikacja uruchomiona na Windows nadal używa `127.0.0.1:15432`. Ustawienia pgAdmin są zachowywane w osobnym wolumenie `pgadmin-data`.
+
+Konfiguracja R2 jest opcjonalna przy uruchamianiu aplikacji. Bez niej logowanie i funkcje korzystające tylko z bazy działają normalnie; operacje na plikach zwracają HTTP 503, a serwer wypisuje ostrzeżenie. Aby włączyć magazyn plików, uzupełnij w `.env` dane R2:
 
 ```dotenv
 R2_ENDPOINT=https://TWOJE_ACCOUNT_ID.r2.cloudflarestorage.com
@@ -38,6 +44,20 @@ R2_BUCKET=people-mp3
 R2_ACCESS_KEY_ID=...
 R2_SECRET_ACCESS_KEY=...
 ```
+
+Połączenie PostgreSQL można skonfigurować osobnymi polami (hasło wpisz dosłownie, bez kodowania znaków):
+
+```dotenv
+DATABASE_URL=postgres://127.0.0.1:15432/vermont
+DATABASE_LOGIN=vermont
+DATABASE_PASSWORD=vermont123!
+```
+
+Serwer i migracje używają tej samej konfiguracji. Nadal obsługiwany jest pełny URL z loginem i hasłem; osobne pola mają pierwszeństwo. Dane muszą odpowiadać rzeczywistemu użytkownikowi i bazie PostgreSQL.
+
+Compose ustawia angielskie komunikaty serwera przez `lc_messages=C`. Aby zastosować zmianę do istniejącego kontenera, wykonaj `docker compose -f infra/compose.dev.yaml up -d --force-recreate`. Polecenie zachowuje wolumen danych. Zmiana `POSTGRES_USER`, `POSTGRES_PASSWORD` lub `POSTGRES_DB` nie aktualizuje istniejącej bazy w wolumenie — trzeba zmienić użytkownika/hasło w działającym PostgreSQL. Dla instalacji Windows ustaw `lc_messages = 'C'` w jej `postgresql.conf` i przeładuj konfigurację jako administrator PostgreSQL.
+
+Brak lub nieprawidłowy `DATABASE_URL` również nie zatrzymuje serwera; funkcje wymagające bazy (w tym logowanie) zwracają wtedy HTTP 503. Po zmianie konfiguracji uruchom backend ponownie.
 
 W Cloudflare: **R2 → bucket → Settings → CORS policy** wklej zawartość `infra/r2-cors.json`. Zostaw bucket prywatny, bez `r2.dev` i bez publicznej domeny. CORS musi dopuszczać nagłówki `Content-Type` i `If-None-Match`.
 
@@ -155,7 +175,7 @@ Narzędzia widzą wyłącznie nagrania właściciela tokenu. `list_recordings` o
 ## Wdrożenie
 
 - Frontend: opublikuj `apps/client/dist` na hostingu statycznym; przekieruj `/api/*` do NestJS, zachowując nagłówek Origin. Vite proxy działa tylko w development. Dla tras Vue Router skonfiguruj **SPA fallback do `/index.html`**, aby odświeżenie `/library` lub `/integrations` działało. Nie stosuj tego fallbacku do API, `/mcp` ani plików statycznych.
-- Backend: `npm run build`, następnie `npm run start -w @people/server` z uzupełnionym `.env`. Alternatywnie Docker z katalogu głównego:
+- Backend: run `npm run build`, then `npm run start -w @vermont/server` with a completed `.env`. Alternatively, use Docker from the repository root:
 
   ```powershell
   docker build -f apps/server/Dockerfile -t fala-server .
@@ -176,3 +196,15 @@ To mała wersja startowa, nie kompletny publiczny hosting plików:
 - Przerwanie karty podczas uploadu może zostawić rekord `pending` i osierocony obiekt. Przed publicznym wdrożeniem dodaj cykliczne sprzątanie rekordów i obiektów starszych niż czas ważności uploadu.
 - Rate limiting jest lokalny dla pojedynczego procesu. Przy wielu instancjach potrzebuje współdzielonego magazynu; zaufanie do reverse proxy wymaga dopasowania do konkretnego hostingu.
 - Konta i nagrania są prywatne; udostępnianie innym użytkownikom nie jest zaimplementowane.
+
+## Prisma ORM
+
+The backend uses Prisma for typed PostgreSQL access. See [Prisma setup and database workflow](docs/prisma.md) for models, client generation, database browsing, migration compatibility, and integration tests.
+
+## Change the database schema
+
+Run commands from the repository root. `npm run db:validate`, `npm run db:migrate`, `npm run db:generate`, and `npm run db:studio` run through Turborepo and target only `@vermont/server`.
+
+In development, add a numbered SQL migration, update the Prisma models, then validate, migrate, regenerate the client, and run the server checks. In production, test committed migrations in staging, back up the database, configure production credentials, and run `npm run db:migrate` before deploying the new server release.
+
+See [development and production schema changes](docs/prisma.md#change-the-database-schema) for the commands and deployment procedure. The current SQL runner manages migration history; Prisma Migrate has not been initialized.

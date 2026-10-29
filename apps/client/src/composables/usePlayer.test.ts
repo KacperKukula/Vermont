@@ -1,9 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Recording } from '@people/contracts';
-import { recordingsService } from '../services/recordings.service';
+import { createPinia, setActivePinia } from 'pinia';
+import type { Recording } from '@vermont/contracts';
+import { recordingsService } from '@/services/recordings.service';
 import { usePlayer } from './usePlayer';
 
-vi.mock('../services/recordings.service', () => ({
+const library = vi.hoisted(() => ({ remember: vi.fn(), forget: vi.fn() }));
+vi.mock('@/composables/useListeningLibrary', () => ({
+  useListeningLibrary: () => library
+}));
+
+vi.mock('@/services/recordings.service', () => ({
   recordingsService: { playback: vi.fn() },
 }));
 
@@ -12,11 +18,12 @@ const recording = (id: string): Recording => ({
 });
 
 describe('shared audio player', () => {
-  const player = usePlayer();
+  let player: ReturnType<typeof usePlayer>;
   let element: HTMLAudioElement;
 
   beforeEach(() => {
-    player.reset();
+    setActivePinia(createPinia());
+    player = usePlayer();
     vi.clearAllMocks();
     element = {
       src: '', play: vi.fn().mockResolvedValue(undefined), pause: vi.fn(),
@@ -33,14 +40,6 @@ describe('shared audio player', () => {
     expect(element.play).toHaveBeenCalledOnce();
   });
 
-  it('plays the next item in the queue', async () => {
-    player.setQueue([recording('one'), recording('two')]);
-    await player.play(recording('one'));
-    player.next();
-    await vi.waitFor(() => expect(element.src).toBe('https://example.com/two'));
-    expect(player.current.value?.id).toBe('two');
-  });
-
   it('pauses the currently playing recording instead of reloading its URL', async () => {
     await player.play(recording('one'));
     player.setPlaying(true);
@@ -51,7 +50,7 @@ describe('shared audio player', () => {
 
   it('clears player state when the active recording is deleted', async () => {
     await player.play(recording('one'));
-    player.removeFromQueue('one');
+    player.forgetRecording('one');
     expect(player.current.value).toBeNull();
     expect(player.playing.value).toBe(false);
     expect(element.removeAttribute).toHaveBeenCalledWith('src');
@@ -66,5 +65,25 @@ describe('shared audio player', () => {
     await pending;
     expect(player.current.value).toBeNull();
     expect(element.play).not.toHaveBeenCalled();
+  });
+
+  it('adds a recording to history only when audio actually starts playing', async () => {
+    await player.play(recording('one'));
+    expect(library.remember).not.toHaveBeenCalled();
+    player.setPlaying(true);
+    expect(library.remember).toHaveBeenCalledWith(recording('one'));
+    player.setPlaying(false);
+    expect(library.remember).toHaveBeenCalledOnce();
+  });
+
+  it('does not add failed playback attempts to history', async () => {
+    vi.mocked(recordingsService.playback).mockRejectedValue(new Error('Unavailable'));
+    await player.play(recording('one'));
+    expect(library.remember).not.toHaveBeenCalled();
+  });
+
+  it('removes a deleted recording from history', () => {
+    player.forgetRecording('one');
+    expect(library.forget).toHaveBeenCalledWith('one');
   });
 });

@@ -1,5 +1,5 @@
 @use 'sass:color';
-@use '../tokens' as tokens;
+@use '@styles/tokens' as tokens;
 
 .button {
   display: inline-block;

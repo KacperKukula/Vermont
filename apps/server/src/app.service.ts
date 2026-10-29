@@ -10,7 +10,7 @@ export class AppService {
   }
 
   async getHealth() {
-    await this.databaseService.pool.query('SELECT 1');
+    await this.databaseService.client.$queryRaw`SELECT 1`;
     return { status: 'ok' };
   }
 }

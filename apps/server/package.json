@@ -1,26 +1,38 @@
 {
-  "name": "@people/server",
+  "name": "@vermont/server",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "dev": "tsc-watch -p tsconfig.json --onSuccess \"deno run --allow-env --allow-net --allow-read --allow-sys --env-file=../../.env dist/main.js\"",
+    "dev": "tsc-watch -p tsconfig.json --onSuccess \"deno run --allow-env --allow-net --allow-read --allow-sys --env-file=../../.env dist/main.js --dev\"",
     "start": "deno run --allow-env --allow-net --allow-read --allow-sys --env-file=../../.env dist/main.js",
     "check": "tsc -p tsconfig.json --noEmit",
-    "test": "deno test --allow-env --allow-read --allow-sys test/",
+    "test": "deno test --sloppy-imports --allow-env --allow-read --allow-sys test/",
     "test:smoke": "node scripts/smoke.mjs",
-    "db:migrate": "deno run --allow-env --allow-net --allow-read --allow-sys --env-file=../../.env scripts/migrate.ts"
+    "db:migrate": "deno run --allow-env --allow-net --allow-read --allow-sys --env-file=../../.env scripts/migrate.ts",
+    "db:generate": "node ../../node_modules/prisma/build/index.js generate",
+    "db:validate": "node ../../node_modules/prisma/build/index.js validate",
+    "db:studio": "node --env-file-if-exists=../../.env ../../node_modules/prisma/build/index.js studio",
+    "prebuild": "npm run db:generate",
+    "precheck": "npm run db:generate",
+    "predev": "npm run db:generate",
+    "pretest": "npm run db:generate",
+    "test:prisma": "deno run --allow-env --allow-net --allow-read --allow-sys --env-file=../../.env scripts/prisma-smoke.mjs",
+    "pretest:prisma": "npm run build"
   },
   "dependencies": {
-    "@people/contracts": "*",
     "@aws-sdk/client-s3": "^3.900.0",
     "@aws-sdk/s3-request-presigner": "^3.900.0",
     "@modelcontextprotocol/sdk": "^1.25.0",
+    "@vermont/contracts": "*",
     "@nestjs/common": "^11.1.0",
     "@nestjs/core": "^11.1.0",
     "@nestjs/platform-express": "^11.1.0",
     "@nestjs/throttler": "^6.4.0",
+    "@vermont/contracts": "*",
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1",
     "cookie-parser": "^1.4.7",
     "express": "^5.1.0",
     "helmet": "^8.1.0",
@@ -34,6 +46,7 @@
     "@types/express": "^5.0.0",
     "@types/node": "^24.0.0",
     "@types/pg": "^8.15.0",
+    "prisma": "7.10.1",
     "tsc-watch": "^7.2.0"
   }
 }

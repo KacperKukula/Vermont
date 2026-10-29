@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useNotifications } from '../../composables/useNotifications';
+import { useNotifications } from '@/composables/useNotifications';
 
 const { error, notice, clearError, clearNotice } = useNotifications();
 </script>
@@ -16,8 +16,6 @@ const { error, notice, clearError, clearNotice } = useNotifications();
 </template>
 
 <style scoped lang="scss">
-@use '../../styles/tokens' as tokens;
-
 .alert {
   display: flex;
   align-items: center;

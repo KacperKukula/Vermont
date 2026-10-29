@@ -7,7 +7,7 @@ COPY packages/contracts/package.json packages/contracts/package.json
 RUN npm ci
 COPY packages/contracts packages/contracts
 COPY apps/server apps/server
-RUN npm run build -w @people/contracts && npm run build -w @people/server
+RUN npm run build -w @vermont/contracts && npm run build -w @vermont/server
 
 FROM denoland/deno:alpine-2.5.6
 WORKDIR /app

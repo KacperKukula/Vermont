@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import type { Recording } from '@people/contracts';
+import type { Recording } from '@vermont/contracts';
 import RecordingItem from './RecordingItem.vue';
 
 defineProps<{
   recordings: Recording[];
   total: number;
+  title: string;
   loading: boolean;
   hasMore: boolean;
   deletingId: string | null;
@@ -22,22 +23,22 @@ defineEmits<{
 </script>
 
 <template>
-  <section class="library-panel" aria-label="Lista nagrań" :aria-busy="loading">
-    <div class="library-toolbar">
-      <h2>Twoje nagrania <span>{{ total }}</span></h2>
-      <input v-model="search" class="search" type="search" placeholder="Szukaj w załadowanych…" aria-label="Szukaj w załadowanych nagraniach" />
+  <section class="recording-list" :aria-label="title" :aria-busy="loading">
+    <div class="recording-list__toolbar">
+      <h2>{{ title }} <span>{{ total }}</span></h2>
+      <input v-model="search" class="recording-list__search" type="search" placeholder="Search loaded files…" aria-label="Search loaded files" />
     </div>
-    <div v-if="loading && !total" class="empty-state" role="status">Ładowanie nagrań…</div>
-    <div v-else-if="!total" class="empty-state">
-      <span class="empty-icon" aria-hidden="true">♫</span>
-      <h3>Tu zaczyna się Twoja kolekcja</h3>
-      <p>Dodaj pierwsze MP3, a my zajmiemy się resztą.</p>
-      <button class="button ghost" @click="$emit('selectFile')">Wybierz pierwsze nagranie</button>
+    <div v-if="loading && !total" class="recording-list__empty" role="status">Loading files…</div>
+    <div v-else-if="!total" class="recording-list__empty">
+      <span class="recording-list__icon" aria-hidden="true">♫</span>
+      <h3>Your collection starts here</h3>
+      <p>Upload an MP3 to this category and start listening.</p>
+      <button class="button ghost" @click="$emit('selectFile')">Choose a file</button>
     </div>
-    <div v-else-if="!recordings.length" class="empty-state">
-      <h3>Chwilowo cisza</h3><p>Brak nagrań pasujących do wyszukiwania.</p>
+    <div v-else-if="!recordings.length" class="recording-list__empty">
+      <h3>No matching files</h3><p>Try another title or filename.</p>
     </div>
-    <ol v-else class="track-list">
+    <ol v-else class="recording-list__tracks">
       <RecordingItem
         v-for="(recording, index) in recordings"
         :key="recording.id"
@@ -51,17 +52,14 @@ defineEmits<{
         @remove="$emit('remove', $event)"
       />
     </ol>
-    <button v-if="hasMore" class="button ghost load-more" :disabled="loading" @click="$emit('loadMore')">
-      {{ loading ? 'Ładowanie…' : 'Pokaż kolejne nagrania' }}
+    <button v-if="hasMore" class="button ghost recording-list__more" :disabled="loading" @click="$emit('loadMore')">
+      {{ loading ? 'Loading…' : 'Load more files' }}
     </button>
   </section>
 </template>
 
 <style scoped lang="scss">
-@use '../../styles/tokens' as tokens;
-@use '../../styles/mixins' as mixins;
-
-.library-panel {
+.recording-list {
   min-width: 0;
   overflow: hidden;
   border: 1px solid tokens.$color-border;
@@ -69,7 +67,7 @@ defineEmits<{
   background: tokens.$color-library;
 }
 
-.library-toolbar {
+.recording-list__toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -92,7 +90,7 @@ defineEmits<{
     }
   }
 
-  .search {
+  .recording-list__search {
     width: 220px;
     padding: 10px 12px;
     font-size: tokens.$font-size-sm;
@@ -101,13 +99,13 @@ defineEmits<{
   @include mixins.tablet {
     flex-wrap: wrap;
 
-    .search {
+    .recording-list__search {
       width: 100%;
     }
   }
 }
 
-.empty-state {
+.recording-list__empty {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -116,7 +114,7 @@ defineEmits<{
   padding: 35px;
   text-align: center;
 
-  .empty-icon {
+  .recording-list__icon {
     display: grid;
     place-items: center;
     width: 70px;
@@ -143,13 +141,13 @@ defineEmits<{
   }
 }
 
-.track-list {
+.recording-list__tracks {
   padding: tokens.$space-2;
   margin: 0;
   list-style: none;
 }
 
-.load-more {
+.recording-list__more {
   display: block;
   margin: tokens.$space-5 auto;
   font-size: tokens.$font-size-sm;

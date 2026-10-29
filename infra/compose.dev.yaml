@@ -3,18 +3,35 @@ name: vermont-database
 services:
   postgres:
     image: postgres:17-alpine
+    command: ["postgres", "-c", "lc_messages=C"]
     environment:
       POSTGRES_DB: vermont
       POSTGRES_USER: vermont
       POSTGRES_PASSWORD: vermont123!
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:15432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U people -d people"]
+      test: ["CMD-SHELL", "pg_isready -U vermont -d vermont"]
       interval: 5s
       timeout: 5s
       retries: 10
+  pgadmin:
+    image: dpage/pgadmin4:9.17
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: vermont123!
+      PGADMIN_DISABLE_POSTFIX: "1"
+    ports:
+      - "127.0.0.1:5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres-data:
+  pgadmin-data:

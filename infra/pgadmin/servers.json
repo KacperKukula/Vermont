@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Vermont",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "vermont",
+      "Username": "vermont",
+      "SSLMode": "prefer"
+    }
+  }
+}

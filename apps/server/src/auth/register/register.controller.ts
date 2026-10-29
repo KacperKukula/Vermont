@@ -1,7 +1,7 @@
 import { Body, Controller, Post, Res } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
-import { credentialsSchema } from '@people/contracts';
+import { credentialsSchema } from '@vermont/contracts';
 import { parse } from '../../validation.js';
 import { AuthService } from '../auth.service.js';
 import { RegisterService } from './register.service.js';
