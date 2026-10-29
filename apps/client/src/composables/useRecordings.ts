@@ -49,7 +49,7 @@ export function useRecordings() {
     deleting.value = recording.id;
     try {
       await recordingsService.remove(recording.id);
-      player.removeFromQueue(recording.id);
+      player.forgetRecording(recording.id);
       await load(true);
     } catch (cause) {
       showError(cause);
@@ -59,7 +59,6 @@ export function useRecordings() {
   }
 
   function play(recording: Recording) {
-    player.setQueue(visible.value);
     void player.play(recording);
   }
 

@@ -4,7 +4,7 @@ import { recordingsService } from '@/services/recordings.service';
 import { useListeningLibrary } from './useListeningLibrary';
 import { useRecordings } from './useRecordings';
 
-const player = vi.hoisted(() => ({ setQueue: vi.fn(), play: vi.fn() }));
+const player = vi.hoisted(() => ({ play: vi.fn() }));
 vi.mock('@/composables/usePlayer', () => ({ usePlayer: () => player }));
 vi.mock('@/composables/useAuth', () => ({
   useAuth: () => ({ user: { value: { id: 'listener', email: 'listener@example.com' } } })
@@ -52,12 +52,12 @@ describe('dashboard file categories', () => {
     expect(recordings.visible.value).toHaveLength(2);
   });
 
-  it('builds the playback queue from the selected category', async () => {
+  it('plays only the selected recording', async () => {
     const recordings = useRecordings();
     await recordings.load(true);
     recordings.category.value = 'books';
     recordings.play(files[0]!);
-    expect(player.setQueue).toHaveBeenCalledWith([files[0]]);
+    expect(player.play).toHaveBeenCalledOnce();
     expect(player.play).toHaveBeenCalledWith(files[0]);
   });
 });

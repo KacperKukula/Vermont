@@ -3,7 +3,7 @@ import { RouterView } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
 import AppHeader from '@/components/layout/AppHeader.vue';
 import AppNotifications from '@/components/layout/AppNotifications.vue';
-import AudioPlayer from '@/components/player/AudioPlayer.vue';
+import AudioPlayer from '@/components/player/AudioPlayer/AudioPlayer.vue';
 
 const { user } = useAuth();
 </script>

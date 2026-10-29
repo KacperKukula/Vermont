@@ -8,7 +8,6 @@ const player = usePlayer();
 const { current, playing, loading } = player;
 
 function play(recording: Recording) {
-  player.setQueue(recentlyPlayed.value);
   void player.play(recording);
 }
 </script>
