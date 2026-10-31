@@ -12,7 +12,7 @@ Vermont is a music and audiobook player where users upload their own audio resou
 The project is a monorepo managed with npm workspaces and Turborepo:
 
 - apps/client/: Vue 3 frontend using Vite and SCSS.
-- apps/server/: NestJS backend running on Deno, with REST and MCP endpoints.
+- apps/server/: NestJS backend running on Deno, with REST endpoints.
 - packages/: shared workspace packages. packages/contracts/ contains shared types and Zod schemas.
 - infra/: infrastructure configuration, including local PostgreSQL and Cloudflare R2 CORS configuration.
 - doc/: project documentation.

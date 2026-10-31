@@ -4,7 +4,6 @@ model User {
   passwordHash String     @map("password_hash") @db.Text
   createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
   sessions     Session[]
-  apiTokens    ApiToken[]
   assets       Asset[]
 
   @@map("users")

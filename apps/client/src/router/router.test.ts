@@ -26,9 +26,9 @@ describe('application routing', () => {
 
   it('redirects a guest to login and preserves the requested page', async () => {
     const router = createAppRouter(createMemoryHistory());
-    await router.push('/integrations');
+    await router.push('/dashboard');
     expect(router.currentRoute.value.name).toBe('login');
-    expect(router.currentRoute.value.query.redirect).toBe('/integrations');
+    expect(router.currentRoute.value.query.redirect).toBe('/dashboard');
   });
 
   it('allows a guest to open registration', async () => {
@@ -58,20 +58,12 @@ describe('application routing', () => {
     expect(router.currentRoute.value.name).toBe('dashboard');
   });
 
-  it('allows navigation between protected pages', async () => {
-    state.user.value = { id: 'user', email: 'user@example.com' };
-    const router = createAppRouter(createMemoryHistory());
-    await router.push('/dashboard');
-    await router.push('/integrations');
-    expect(router.currentRoute.value.name).toBe('integrations');
-  });
-
   it('does not abandon an active upload', async () => {
     state.user.value = { id: 'user', email: 'user@example.com' };
     const router = createAppRouter(createMemoryHistory());
     await router.push('/dashboard');
     state.uploading.value = true;
-    await router.push('/integrations');
+    await router.push('/register');
     expect(router.currentRoute.value.name).toBe('dashboard');
   });
 

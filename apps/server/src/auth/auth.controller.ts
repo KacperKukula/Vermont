@@ -25,15 +25,4 @@ export class AuthController {
     return { ok: true };
   }
 
-  @Post('mcp-token')
-  @UseGuards(SessionGuard)
-  issueToken(@Req() request: AuthRequest) {
-    return this.authService.issueToken(request.user.id);
-  }
-
-  @Post('mcp-token/revoke')
-  @UseGuards(SessionGuard)
-  revokeToken(@Req() request: AuthRequest) {
-    return this.authService.revokeToken(request.user.id);
-  }
 }

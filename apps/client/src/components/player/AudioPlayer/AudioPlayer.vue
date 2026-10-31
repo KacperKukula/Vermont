@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onBeforeUnmount, onMounted } from 'vue';
 import WaveformIcon from '@/assets/icons/player/waveform.svg?component';
 import VolumeMutedIcon from '@/assets/icons/player/volume-muted.svg?component';
 import VolumeIcon from '@/assets/icons/player/volume.svg?component';
@@ -8,35 +9,79 @@ import PlayerControls from './components/PlayerControls.vue';
 import PlayerSlider from './components/PlayerSlider.vue';
 import { secondsToTime } from '@/utils/time';
 
-const {
-  audio,
-  elapsed,
-  duration,
-  volume,
-  muted,
-  speed,
-  buffering,
-  current,
-  playing,
-  loading,
-  busy,
-  volumeLevel,
-  status,
-  syncTime,
-  syncPreferences,
-  togglePlayback,
-  seek,
-  changeVolume,
-  toggleMute,
-  handleEnded,
-  handleError,
-  setPlaying
-} = useAudioPlayback();
+// const {
+//   audio,
+//   elapsed,
+//   duration,
+//   volume,
+//   muted,
+//   speed,
+//   buffering,
+//   playing,
+//   loading,
+//   busy,
+//   volumeLevel,
+//   status,
+//   syncTime,
+//   syncPreferences,
+//   togglePlayback,
+//   seek,
+//   changeVolume,
+//   toggleMute,
+//   handleEnded,
+//   handleError,
+//   setPlaying
+// } = useAudioPlayback();
+
+const downloadController = new AbortController();
+
+onMounted(async () => {
+  try {
+    const response = await fetch('/resources/test.mp3', {
+      signal: downloadController.signal
+    });
+    if (!response.ok) throw new Error(`Download failed: HTTP ${response.status}`);
+    if (!response.body) throw new Error('The download response has no stream.');
+
+    const totalBytes = Number(response.headers.get('Content-Length'));
+    if (!Number.isFinite(totalBytes) || totalBytes <= 0) {
+      throw new Error('The download response has no valid file size.');
+    }
+
+    const reader = response.body.getReader();
+    let downloadedBytes = 0;
+    let lastPercentage = -1;
+    try {
+      console.log('Test audio download: 0%');
+      lastPercentage = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        downloadedBytes += value.byteLength;
+        const percentage = Math.min(100, Math.floor(downloadedBytes / totalBytes * 100));
+        if (percentage !== lastPercentage) {
+          console.log(`Test audio download: ${percentage}%`);
+          lastPercentage = percentage;
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  } catch (cause) {
+    if (downloadController.signal.aborted) return;
+    console.error('Failed to download test audio:', cause);
+  }
+});
+
+onBeforeUnmount(() => downloadController.abort());
 </script>
 
 <template>
   <section class="audio-player" aria-label="Audio player" :aria-busy="busy">
-    <audio
+    KK
+
+    <!--<audio
       ref="audio"
       preload="metadata"
       @loadedmetadata="syncTime(); syncPreferences()"
@@ -105,7 +150,7 @@ const {
           @change="changeVolume"
         />
       </div>
-    </div>
+    </div>-->
   </section>
 </template>
 

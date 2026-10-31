@@ -38,7 +38,6 @@ async function signOut() {
     </RouterLink>
     <nav v-if="user" class="main-nav" aria-label="Menu główne">
       <RouterLink :to="{ name: 'dashboard' }">Dashboard</RouterLink>
-      <RouterLink :to="{ name: 'integrations' }">Integracje</RouterLink>
     </nav>
     <div v-if="user" class="account">
       <span>{{ user.email }}</span>

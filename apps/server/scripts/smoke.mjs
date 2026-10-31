@@ -48,9 +48,9 @@ try {
   assert.equal((await request('/api/auth/register', {
     method: 'POST', headers: { Origin: 'http://localhost:5173', 'Content-Type': 'application/json' }, body: JSON.stringify({ email: 'invalid', password: 'short' }),
   })).status, 400);
-  assert.equal((await request('/mcp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })).status, 401);
-  assert.equal((await request('/mcp')).status, 405);
-  console.log('Deno/NestJS HTTP smoke test passed (auth, validation, Origin, MCP).');
+  assert.equal((await request('/mcp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })).status, 404);
+  assert.equal((await request('/mcp')).status, 404);
+  console.log('Deno/NestJS HTTP smoke test passed (auth, validation, Origin, removed endpoints).');
 } finally {
   if (child.exitCode === null && !startupError) {
     const exited = once(child, 'exit');

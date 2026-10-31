@@ -45,30 +45,4 @@ export class AuthService {
     }
   }
 
-  async apiToken(token: string): Promise<User> {
-    const apiToken = await this.databaseService.client.apiToken.findUnique({
-      where: { tokenHash: tokenHash(token) },
-      select: { user: { select: { id: true, email: true } } },
-    });
-    if (!apiToken) {
-      throw new UnauthorizedException();
-    }
-    return apiToken.user;
-  }
-
-  async issueToken(userId: string) {
-    const token = newToken();
-    await this.databaseService.client.$transaction(async (transaction) => {
-      // Serialize rotations so concurrent requests leave only one token per user.
-      await transaction.$queryRaw`SELECT id FROM users WHERE id = ${userId}::uuid FOR UPDATE`;
-      await transaction.apiToken.deleteMany({ where: { userId } });
-      await transaction.apiToken.create({ data: { tokenHash: tokenHash(token), userId } });
-    });
-    return { token };
-  }
-
-  async revokeToken(userId: string) {
-    await this.databaseService.client.apiToken.deleteMany({ where: { userId } });
-    return { ok: true };
-  }
 }

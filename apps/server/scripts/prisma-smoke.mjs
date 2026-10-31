@@ -44,15 +44,6 @@ try {
   });
   await assert.rejects(auth.session(expired), (error) => error.getStatus() === 401);
 
-  const issued = await Promise.all([auth.issueToken(user.id), auth.issueToken(user.id)]);
-  assert.equal(await database.client.apiToken.count({ where: { userId: user.id } }), 1);
-  const validTokens = await Promise.allSettled(issued.map(({ token }) => auth.apiToken(token)));
-  assert.equal(validTokens.filter((result) => result.status === 'fulfilled').length, 1);
-  await auth.revokeToken(user.id);
-  for (const { token } of issued) {
-    await assert.rejects(auth.apiToken(token), (error) => error.getStatus() === 401);
-  }
-
   const upload = await recordings.initiate(user.id, { title: 'Prisma test', filename: 'test.mp3', sizeBytes: 128 });
   assert.deepEqual(await recordings.list(user.id), []);
   await assert.rejects(recordings.complete(other.id, upload.id), (error) => error.getStatus() === 404);
@@ -69,7 +60,7 @@ try {
   await recordings.remove(user.id, upload.id);
   assert.equal(removedKeys.length, 1);
   assert.deepEqual(await recordings.list(user.id), []);
-  console.log('Prisma/Deno database integration passed: accounts, sessions, token rotation, recordings, ownership, and serialization.');
+  console.log('Prisma/Deno database integration passed: accounts, sessions, recordings, ownership, and serialization.');
 } catch (error) {
   console.error('Prisma integration failed:', error);
   throw error;

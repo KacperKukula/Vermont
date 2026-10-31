@@ -35,15 +35,6 @@ export const routes = {
       },
     },
     {
-      path: paths.integrations,
-      name: 'integrations',
-      component: () => import('@/views/IntegrationsView.vue'),
-      meta: {
-        requiresAuth: true,
-        title: 'Integracje'
-      },
-    },
-    {
       path: paths.notFound,
       name: 'not-found',
       component: () => import('@/views/NotFoundView.vue'),

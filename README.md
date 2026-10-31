@@ -9,7 +9,6 @@ Monorepo **Turborepo**: Vue 3 + Vite + SCSS, NestJS na **Deno**, PostgreSQL i pr
 - Upload MP3 bezpośrednio do R2 z paskiem postępu, tytułem i drag & drop.
 - Odtwarzanie, przewijanie, głośność i przejście do kolejnego nagrania.
 - Usuwanie własnych nagrań z R2 i bazy.
-- Endpoint MCP z narzędziami `list_recordings` oraz `get_playback_url`.
 
 ## Wymagania
 
@@ -69,7 +68,6 @@ npm run dev
 - Panel: **http://localhost:5173** — używaj dokładnie tej domeny, nie `127.0.0.1`, ze względu na kontrolę Origin.
 - API: http://localhost:3000/api
 - Sprawdzenie bazy: http://localhost:3000/api/health
-- MCP: http://localhost:3000/mcp
 
 Możesz również użyć `deno task dev`, `deno task build`, `deno task check`, `deno task test` i `deno task db:migrate`. To skróty wywołujące zadania npm/Turborepo, nie alternatywny system instalacji zależności.
 
@@ -84,12 +82,10 @@ apps/client/           Vue, Vite, SCSS
     main.ts            rejestracja Vue Router i montowanie aplikacji
     router/            trasy, ochrona sesji i testy nawigacji
     layouts/           wspólny AppLayout z nagłówkiem i odtwarzaczem
-    views/             Login, Register, Library, Integrations, NotFound
-    components/        auth, layout, recordings, player, integrations
     composables/       sesja, biblioteka, upload, odtwarzacz, komunikaty
     services/          transport HTTP i osobne serwisy API
     utils/             formatowanie dat i rozmiarów
-apps/server/           NestJS, REST i MCP, runtime Deno
+apps/server/           NestJS REST API, Deno runtime
   src/
     main.ts            uruchomienie aplikacji i middleware
     app.module.ts      moduł główny — łączy moduły funkcjonalne
@@ -97,7 +93,6 @@ apps/server/           NestJS, REST i MCP, runtime Deno
     app.service.ts     informacje o aplikacji i sprawdzenie bazy
     auth/              auth.module.ts, auth.controller.ts, auth.service.ts, session.guard.ts
     recordings/        recordings.module.ts, recordings.controller.ts, recordings.service.ts
-    mcp/               mcp.module.ts, mcp.controller.ts, mcp.service.ts
     database/          database.module.ts, database.service.ts
     storage/           storage.module.ts, storage.service.ts
   migrations/          wersjonowane migracje SQL
@@ -107,7 +102,6 @@ packages/contracts/    wspólne typy i schematy Zod, bez kodu serwerowego
 infra/                 PostgreSQL Compose i przykład CORS R2
 ```
 
-Nie potrzeba teraz workera ani osobnego serwera MCP. Dostęp do bazy wykorzystuje `pg` i parametryzowane SQL — celowo bez dodatkowego ORM dla kilku prostych tabel.
 
 ### Konwencje NestJS
 
@@ -123,7 +117,6 @@ Nie potrzeba teraz workera ani osobnego serwera MCP. Dostęp do bazy wykorzystuj
 - `App.vue` zawiera wyłącznie `RouterView`. Wspólna otoczka jest w `layouts/AppLayout.vue`.
 - `views/` składa strony z komponentów. Komponenty listy otrzymują dane przez props i zgłaszają akcje przez emits.
 - `composables/` zarządza stanem i operacjami; `services/` zna adresy endpointów API.
-- Stan sesji, odtwarzacza i powiadomień jest współdzielony. Lista nagrań i formularze mają stan lokalny; token MCP znika po opuszczeniu strony integracji.
 - Odtwarzacz znajduje się poza widokiem strony, więc zmiana Biblioteka → Integracje nie przerywa odtwarzania.
 
 Trasy Vue Router (history mode):
@@ -134,7 +127,6 @@ Trasy Vue Router (history mode):
 | `/login` | Logowanie | Gość |
 | `/register` | Rejestracja | Gość |
 | `/library` | Biblioteka i upload MP3 | Zalogowany użytkownik |
-| `/integrations` | Token MCP | Zalogowany użytkownik |
 | pozostałe | Strona 404 | Wszyscy |
 
 Router odtwarza sesję przed wejściem na chronioną stronę, zachowuje docelowy adres przy logowaniu i blokuje zmianę strony podczas uploadu. Kontrola w routerze służy wygodzie użytkownika — backend nadal samodzielnie sprawdza sesję i własność nagrań.
@@ -158,23 +150,8 @@ Testy jednostkowe nie wymagają danych Cloudflare ani uruchomionej bazy. Nie zas
 
 W bazie przechowywany jest klucz obiektu, nie podpisany URL. Link umożliwia dostęp każdemu, kto go zna, do czasu wygaśnięcia. Sprawdzenie sygnatury MP3 jest podstawowe — nie jest pełną walidacją dekoderem ani skanerem bezpieczeństwa.
 
-## MCP i ChatGPT
-
-W panelu wejdź na stronę **Integracje** (`/integrations`) i wygeneruj token. Nowy token unieważnia poprzedni. W bazie przechowywany jest tylko SHA-256 tokenu. Możesz go odwołać na tej samej stronie.
-
-Serwer obsługuje bezstanowy **Streamable HTTP**, `POST /mcp`, z nagłówkiem:
-
-```http
-Authorization: Bearer TWOJ_TOKEN
-```
-
-Narzędzia widzą wyłącznie nagrania właściciela tokenu. `list_recordings` obsługuje `offset`; `get_playback_url` przyjmuje `recordingId`. Nie ma transkrypcji ani analizy dźwięku.
-
-**To nie jest jeszcze gotowa, autoryzowana integracja z kontami ChatGPT.** Obecny mechanizm to ręczny token Bearer dla klientów MCP obsługujących własny nagłówek Authorization. Dla standardowego zdalnego połączenia ChatGPT należy wdrożyć serwer pod publicznym HTTPS i skonfigurować zgodną autoryzację OAuth (np. z zewnętrznym dostawcą tożsamości). Projekt nie implementuje jeszcze serwera OAuth ani jego metadanych. Nie wyłączaj ochrony MCP w celu podłączenia ChatGPT.
-
 ## Wdrożenie
 
-- Frontend: opublikuj `apps/client/dist` na hostingu statycznym; przekieruj `/api/*` do NestJS, zachowując nagłówek Origin. Vite proxy działa tylko w development. Dla tras Vue Router skonfiguruj **SPA fallback do `/index.html`**, aby odświeżenie `/library` lub `/integrations` działało. Nie stosuj tego fallbacku do API, `/mcp` ani plików statycznych.
 - Backend: run `npm run build`, then `npm run start -w @vermont/server` with a completed `.env`. Alternatively, use Docker from the repository root:
 
   ```powershell
